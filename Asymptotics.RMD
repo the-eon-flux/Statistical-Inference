@@ -1,0 +1,136 @@
+---
+title: "Trip to Asymptotia"
+author: "Tejus"
+date: "13/09/2020"
+output: html_document
+---
+
+## Introduction
+
+- Asymptotics refers to the behavior of estimators as the sample size goes to infinity.
+- Our very notion of probability depends on the idea of asymptotics.
+ For example, many people define probability as the proportion of times 
+    an event would occur in infinite repetitions. That is, the probability of a        head on a coin is 50% because we believe that if we were to flip it infinitely
+    many times, we would get exactly 50% heads.
+
+- We can use asymptotics to help is figure out things about distributions without 
+    knowing much about them to begin with. 
+    
+- A profound idea along these lines is the Central Limit Theorem. **It states that the distribution of averages is often normal, even if the distribution that the data is being sampled from is very non-normal.**  
+
+- This helps us create robust strategies for creating statistical inferences when we're not willing to assume much about the generating mechanism of our data.
+
+## Asymptotics
+
+- Asymptotics are incredibly useful for simple statistical inference and approximations.  
+- Asymptotics form the basis of frequency interpretation of probabilities. { Approaching p(Head) = 0.5 }  
+
+## Law of large numbers (LLN)
+
+- Average ( mean of x's) limits to what it's estimating, the population mean. Let's  take an example.
+- $$\bar X_n$$could be the average of results of `n` coin flips. As we flip a fair coin over & over, it eventually converges to true probability of head.  
+
+
+## Simulation Example 1
+
+```{r Simulation}
+# Number of simulations
+library(ggplot2)
+n <- 1000
+
+# Generate 1k numbers > cum sum > Divide each by respective sample size. Result : Mean. 
+means <- cumsum(rnorm(n)) / (1:n)
+
+# Plot
+
+g <- ggplot(data.frame(x = 1:n, y = means), aes(x = x, y = y))
+g <- g + geom_hline(yintercept = 0) + geom_line(size = 1.5)
+g <- g + labs(x = "Number of obs", y = "Cumulative mean")
+g
+```
+
+We can see that number of simulations increase we get closer to true **population mean**. *In the sense it limits to what it's estimating, the population mean.*
+
+## Simulation Example 1 (Coin flips)
+
+```{r }
+# Number of simulations
+n <- 1000
+
+# Generate 1k numbers > cum sum > Divide each by respective sample size. Result : Mean. 
+means <- cumsum(sample(0:1, n, replace = TRUE)) / (1:n)
+
+# Plot
+
+g <- ggplot(data.frame(x = 1:n, y = means), aes(x = x, y = y))
+g <- g + geom_hline(yintercept = 0.5) + geom_line(size = 1.5)
+g <- g + labs(x = "Number of obs", y = "Cumulative mean")
+g
+```
+
+## Important Points to Remember
+
+- An estimator is consistent if it converges to what it wants to estimate.  
+            # LLN says that sample averages of IID sample is consistent for population mean.  
+            # Typically, good estimators are consistent; Collect as many samples as possible.  
+- The sample variance & sample std deviation of IID random variables are consistent as well.  
+
+## Central Limit Theorem
+
+- States that distribution of averages of IID variables (properly normalised) becomes that of a std normal as the sample size increases. 
+- The result is that  
+$$\frac{\bar X_n - \mu}{\sigma / \sqrt{n}}=
+\frac{\sqrt n (\bar X_n - \mu)}{\sigma}
+= \frac{\mbox{Estimate} - \mbox{Mean of estimate}}{\mbox{Std. Err. of estimate}}$$ has a distribution like that of a standard normal for large $n$.  
+- The useful way to think about the CLT is that $\bar X_n$ is approximately $N(\mu, \sigma^2 / n)$ (Normally distributed)
+
+## Confidence Intervals
+
+- According to the CLT, the sample mean, $\bar X$, 
+is approximately normal with mean $\mu$ and sd $\sigma / \sqrt{n}$
+
+- $\mu + 2 \sigma /\sqrt{n}$ is pretty far out in the tail
+(only 2.5% of a normal being larger than 2 sds in the tail)
+- Similarly, $\mu - 2 \sigma /\sqrt{n}$ is pretty far in the left tail (only 2.5% chance of a normal being smaller than 2 sds in the tail)
+
+- So the probability $\bar X$ is bigger than $\mu + 2 \sigma / \sqrt{n}$
+or smaller than $\mu - 2 \sigma / \sqrt{n}$ is 5%
+
+- Or equivalently, the probability of being between these limits is 95%
+- The quantity $\bar X \pm 2 \sigma /\sqrt{n}$ is called a 95% interval for $\mu$
+
+- The 95% refers to the fact that **if one were to repeatedly get samples of size $n$ from this population**, about 95% of the intervals obtained would contain $\mu$
+
+- The 97.5th quantile is 1.96 (so I rounded to 2 above)
+
+- For 90% interval you want (100 - 90) / 2 = 5% in each tail 
+  - So you want the 95th percentile (1.645)
+  
+  
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

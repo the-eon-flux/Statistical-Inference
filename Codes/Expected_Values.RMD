@@ -1,0 +1,175 @@
+---
+title: "Expected_Values.R"
+author: "Tejus"
+date: "12/09/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(UsingR)
+data("galton")
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Statistical Inference
+
+The process of making conclusions about populations from noisy data (that we're assuming was drawn from that population).
+
+Way to go : Assume that the population & the randomness governing our sample can be given by densities and mass functions.
+
+We can work with characteristics of these densities & mass functions instead of the whole function.
+
+Most useful characterizations :  
+
+* **Expected Values** Or **Mean** : Characterization of it's center (Idea of physical center of mass).  
+* **Variance** : Characterization of spread of data.  
+* **Sample Quantiles**  
+
+**The above characterizations are used to estimate the same characters for population versions. **  
+Eg. Sample mean will estimate population mean, sample variance estimates population variance and so on.
+
+## Population Mean
+
+- The **expected value** or **mean** of a random variable is the center of its distribution. (Balances data points on both sides)  
+- For discrete random variable $X$ with PMF $p(x)$, it is defined as follows
+$$
+E[X] = \sum_x xp(x)
+$$
+where the sum is taken over the possible values of $x$
+
+- $E[X]$ represents the center of mass of a collection of locations and weights, $\{x, p(x)\}$
+
+## Sample Mean
+
+- Sample Mean is an estimate of **Population Mean**.  
+- Sample Mean is the center of mass if we treat each data point as equally likely i.e, $p(x_i) = 1/n$ .
+- The center of mass of the data is the empirical mean
+$$
+\bar X = \sum_{i=1}^n x_i p(x_i)
+$$
+where $p(x_i) = 1/n$
+
+In above case $$\bar X$$ is equal to our center of mass. 
+
+## Example of sample mean
+#### Finding the center of mass of these bars.  
+```{r galton, fig.height=6,fig.width=12, fig.align='center', echo = TRUE, message =FALSE, warning=FALSE}
+library(ggplot2)
+library(reshape2)
+longGalton <- melt(galton, measure.vars = c("child", "parent"))
+g <- ggplot(longGalton, aes(x = value)) + geom_histogram(aes(y = ..density..,  fill = variable), binwidth=1, colour = "black") + geom_density(size = 2)
+g <- g + facet_grid(. ~ variable)
+g
+
+```
+
+### Using Manipulate
+
+Manipulating the vertical line (adjusting the mean) and minimizing the MSE (Mean squared error) we got the mean at $$ \mu = 68 $$ which gives minimum MSE.  
+```{r echo=FALSE}
+
+            mu = 68
+            g <- ggplot(galton, aes(x = child))
+            g <- g + geom_histogram(fill = "salmon", 
+                        binwidth=1, aes(y = ..density..), colour = "black")
+            g <- g + geom_density(size = 2)
+            g <- g + geom_vline(xintercept = mu, size = 2)
+            mse <- round(mean((galton$child - mu)^2), 3)  
+            g <- g + labs(title = paste("mu = ", mu, " MSE = ", mse))
+            g
+```
+
+## Example of Population Mean
+- Suppose a coin is flipped and $X$ is declared $0$ or $1$ corresponding to a head or a tail, respectively
+- What is the expected value of $X$? 
+    $$
+    E[X] = .5 \times 0 + .5 \times 1 = .5
+    $$
+- Note, if thought about geometrically, this answer is obvious; if two equal weights are spaced at 0 and 1, the center of mass will be $.5$
+
+```{r echo=FALSE}
+Pm <- ggplot(data.frame(x = factor(0 : 1), y = c(.5, .5)), aes(x = x, y = y)) + geom_bar(stat = "identity", colour = 'black', fill = "lightblue")
+
+Pm
+```
+
+## Continuous random variables
+
+- For a continuous random variable, $X$, with density, $f$, the expected value is again exactly the center of mass of the density
+
+## Facts about expected values
+
+- Recall that expected values are properties of distributions
+- Note the average of random variables is itself a random variable (That means it also has a distribution. One could repeatedly sample from this distribution) and its associated distribution has an expected value 
+- **The center of this distribution is the same as that of the original distribution**
+- Therefore, the expected value of the **sample mean** is the population mean that it's trying to estimate. (They overlap at mean; Ideal case we want)
+- When the expected value of an estimator is what its trying to estimate, we say that the estimator is **unbiased**
+
+---
+## Simulation experiment 1
+
+Simulation to show  **The center of averaged distribution is the same as that of the original distribution whose values are averaged**
+Simulating normals with mean 0 and variance 1 versus averages
+of 10 normals from the same population
+
+
+```{r }
+
+library(ggplot2)
+nosim <- 10000; n <- 10
+dat <- data.frame(
+    x = c(rnorm(nosim), apply(matrix(rnorm(nosim * n), nosim), 1, mean)),
+    what = factor(rep(c("Obs", "Mean"), c(nosim, nosim))) 
+    )
+ggplot(dat, aes(x = x, fill = what)) + geom_density(size = 2, alpha = .2) 
+
+
+```
+
+- Blue density : 10K simulations from standard normal. 
+            *Lot of simulations therefore good approximation to the truth, hence the center of mass is close to 0*  
+- Red density : {Average of 10 simulations} * 10K simulations. 
+            # It's a different distribution from above because this is a dist of averages of 10 std. normals.  
+            # The first one was a distribution of just each std. normals.  
+- Red dist (concentrated around zero '0')
+
+
+## Simulation experiment 2
+
+### Averages of x die rolls
+
+```{r}
+
+dat <- data.frame(
+            x = c(sample(1:6, nosim, replace = TRUE), # For 1
+                        apply(matrix(sample(1:6, nosim*2, replace = T), nosim), 1, mean), # for 2
+                        apply(matrix(sample(1:6, nosim*3, replace = TRUE), nosim), 1, mean),
+                        apply(matrix(sample(1:6, nosim*4, replace = T), nosim), 1 , mean)
+),
+            size = rep(c(1:4), rep(nosim,4))
+            )
+
+g <- ggplot(dat, aes(x = x, fill = size)) + geom_histogram(alpha = 0.2, binwidth = 0.25, color = "black")
+g <- g + facet_grid(.~size)
+g
+
+```
+
+- First plot : Histogram of 10K die roll results. Bars would become equal as we approach infinte rolls. **Center of mass : 3.5 (Approximately of course)**
+- Second plot : {Average of 2 dice rolls} * 10K simulations. Distribution for averages of 2 die rolls. More concentrated and gaussian. **Center of mass almost equal to the previous expt of single die rolls**
+- Simlilarly for plots 3 & 4. 
+
+Note : As the number of averages increase, the distribution gets more concentrated around mean. The center of mass doesn't change.
+
+---
+
+## Sumarizing what we know
+- Expected values are properties of distributions
+- The population mean is the center of mass of population
+- The sample mean is the center of mass of the observed data
+- The sample mean is an estimate of the population mean
+- The sample mean is unbiased 
+  - The population mean of its distribution is the mean that it's
+  trying to estimate. (We don't have the dist of the sample mean. But this fact helps us to permutatively calculate the probabilites using that sample mean)
+- The more data that goes into the sample mean, the more 
+concentrated its density / mass function is around the population mean
