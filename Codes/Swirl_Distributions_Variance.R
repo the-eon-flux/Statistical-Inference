@@ -116,4 +116,24 @@ pbinom(5, 1000, 0.01, lower.tail = TRUE)
 ppois(5, 1000*0.01)
 
 
+# Quiz 2 
 
+pnorm(70, 80, 10, lower.tail = TRUE)
+qnorm(0.95, 1100, 75)
+
+qnorm(0.95, 1100, 7.5)
+
+# Fair coin 5 times. Find p(>=4)
+pbinom(3, 5, 0.5,lower.tail = FALSE)
+
+# 
+pnorm(16, 15, 10/sqrt(100) ) - pnorm(14, 15, 10/sqrt(100) ) 
+
+ppois(10, 5*3)
+
+-2 + x/ sqrt(n)
+            
+qt(0.975, 8)
+qt(0.95, 8)
+
+pt(-2,8)
