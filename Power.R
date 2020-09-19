@@ -37,6 +37,11 @@ pt(3, 3, lower.tail = FALSE)
 t.test()
 
 
+power.t.test(n = 100, delta = 1, alternative = "one.sided", sd = 0.4)
 
 
+n <- (qnorm(.95) + qnorm(.8)) ^ 2 * .04 ^ 2 / .01^2
+n <- (qnorm(.05) + qnorm(.2)) ^ 2 * .04 ^ 2 / .01^2
+
+qnorm(.95) + (1 / 0.4)
 
