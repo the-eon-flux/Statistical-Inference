@@ -12,7 +12,7 @@ library(ggplot2)
 ## Title :  
 
 ### Overview : 
-- Investigating the exponential distribution & comparing it with the Central Limit Theorem.
+- Investigating the exponential distribution 
 - In R we can use the distribution using `rexp(n, lambda)`, where `lambda` is the rate parameter.
 - Assuming that the population & the randomness governing our sample can be given by densities and mass functions. We work with characteristics of these densities & mass functions instead of the whole function.  
 
@@ -25,12 +25,14 @@ library(ggplot2)
 
 
 ```{r Constants, echo=FALSE}
-lambda <- 2
+lambda <- 0.2
 n <- 40
 n_sim <- 1000
 
 # Random numbers from the distribution
 ExpDataPts <- matrix(rexp(n_sim, lambda)) # Exp dist
+ExpDataPts40 <- apply( matrix(rexp(n_sim*n), n_sim),
+                        1, mean)
 NormalDataPts <- matrix(rnorm(n_sim, 1/lambda)) # Normal dist.
 
 ```
@@ -58,7 +60,7 @@ print(g)
 
 ```{r Histogram, echo=FALSE}
 
-g <- ggplot(data = PlotDf, aes(x = Data_Points)) + geom_histogram(aes(fill = Distribution), binwidth = 0.35)  + geom_vline(xintercept = 1/lambda, size = 1.5)
+g <- ggplot(data = PlotDf, aes(x = Data_Points)) + geom_histogram(aes(fill = Distribution), binwidth = 1)  + geom_vline(xintercept = 1/lambda, size = 1.5)
 
 print(g) 
 
@@ -74,9 +76,8 @@ Again you can see in this histogram that the `Exponential` distribution compared
 **Sample Mean**
 
 - Sample Mean is an estimate of **Population Mean** `(Theoretical Mean)`.  
-- After doing some experiments & collecting data the mean of that data is our **Sample Mean** which is the estimate for our population mean.
+- After doing some experiments & collecting data the mean of that data is our **Sample Mean** which is the estimate for our population mean.  
 
-#### Sample Mean versus Theoretical Mean: 
 
 ```{r SampleMean, echo=FALSE}
 
@@ -85,11 +86,11 @@ PlotDf <- data.frame(Data_Points = ExpDataPts, Index = 1:n_sim)
 Stat <- data.frame(x = c(1/lambda), Line = c("Theoretical Mean"))
 
 g <- ggplot(data=PlotDf, aes(x = Data_Points)) + 
-            geom_histogram(aes(y =..density..), binwidth = 0.13, fill="white", color = "black") + 
+            geom_histogram(aes(y =..density..), binwidth = 1, fill="white", color = "black") + 
             geom_density(size = 1.5, color="black", fill = "#FF6666", alpha = 0.2) + 
             geom_vline(aes(xintercept = x, linetype = Line),data=Stat, color = "BLUE", size = 1.5, show.legend = TRUE) + 
             labs(title = "Theoretical Mean amongst Sample Mean") + 
-            labs(x= "Density", y = "Exponential Data Point Values") 
+            labs(x= "Exponential Data Point Values", y = "Density") 
 
 print(g)
 
@@ -97,20 +98,62 @@ print(g)
 
 Clearly the peak (sample mean) is close to the *Population mean* but not exactly the same. It will approach the population mean as we increase the sample size. 
 
+### The sample variance and the theoretical variance of the distribution.
 
-```{r CentralLimitThm}
+- Sample Variance is an estimate of **Population Variance**.  
+- After doing some experiments & collecting data the variance of that data is our **Sample variance** which is the estimate for our population variance.
+- Since it's also a random variable, it must be centered around true population variance
+`r 1/lambda^2`
+
+
+```{r SampleVar, echo=FALSE, fig.cap="Distribution of 1000 variances for (40 values each) "}
+
+Var_ExpDataPts40 <- apply( matrix(rexp(n_sim*n), n_sim),
+                        1, var)
+PlotDf <- data.frame(Variance = Var_ExpDataPts40, Index = 1:n_sim)
+Stat <- data.frame(x = c((1/lambda^2)/n,1/lambda^2), Line = c("Sample Varaince","Theoretical Variance"))
+
+g <- ggplot(data=PlotDf, aes(x = Variance)) + 
+            geom_histogram(aes(y =..density..), binwidth = 1, fill="white", color = "black") + 
+            geom_vline(aes(xintercept = x, linetype = Line),data=Stat, color = "BLUE", size = 1.5, show.legend = TRUE) + 
+            labs(title = "Theoretical variance amongst Sample variance") + 
+            labs(x= "Variance of Exponential Data Values", y = "Density") +
+            geom_density(size = 1.5, color="black", fill = "#FF6666", alpha = 0.2) 
+            
+print(g)
 
 ```
-## Simulations
+
+Sample variance is an estimate of population variance hence as we have learned that Population variance (`r 1/lambda`) / sample size (`r n`) gives us our **sample variance** (`r (1/lambda)/n`)
+
+It is clearly not centered at population variance because in this case it was just 40 values each. But as we increase the sample size it will approach the true **Population Variance**.
 
 
 
-```{r pressure, echo=FALSE}
+### The sample variance and the theoretical variance of the distribution.
+
+
+
+```{r CLT, echo=FALSE}
+Mean_ExpDataPts40 <- apply( matrix(rexp(n_sim*n), n_sim),
+                        1, mean)
+
+PlotDf <- data.frame(Mean = c(ExpDataPts, Mean_ExpDataPts40) , Index = rep(1:n_sim, 2), "Factor" = c(rep("Avg", n_sim), rep("Avg40", n_sim)) )
+PlotDf$Factor <- as.factor(PlotDf$Factor)
+
+Stat <- data.frame(x = c(1/lambda), Line = c("Theoretical Mean"))
+
+g <- ggplot(data=PlotDf, aes(x = Mean)) + 
+            geom_histogram(aes(y =..density..), binwidth = 0.35, fill="white", color = "black") +  
+            labs(title = "Law of large numbers") + 
+            labs(x= "Density", y = "Value Exponential Data Values") +
+            geom_density(size = 1.5, color="black", fill = "#FF6666", alpha = 0.2) +
+            facet_grid(.~Factor)
+            
+print(g)
+
 
 ```
 
 
-
-## Sample Variance versus Theoretical Variance:
-
-## Distribution:
+In the above plot
