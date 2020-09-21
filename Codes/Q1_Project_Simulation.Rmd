@@ -1,15 +1,13 @@
 ---
 title: "Simulation Exercise"
 author: "Tejus"
-output: pdf_document
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(ggplot2)
 ```
-
-## Title :  
 
 ### Overview : 
 - Investigating the exponential distribution 
@@ -30,10 +28,12 @@ n <- 40
 n_sim <- 1000
 
 # Random numbers from the distribution
-ExpDataPts <- matrix(rexp(n_sim, lambda)) # Exp dist
-ExpDataPts40 <- apply( matrix(rexp(n_sim*n), n_sim),
+ExpDataPts <- rexp(n_sim, lambda) # Exp dist
+ExpDataPts40 <- apply( matrix(rexp(n_sim*n, lambda), n_sim),
                         1, mean)
-NormalDataPts <- matrix(rnorm(n_sim, 1/lambda)) # Normal dist.
+NormalDataPts <- rnorm(n_sim, 1/lambda) # Normal dist.
+NormalDataPts40 <- apply( matrix(rnorm(n_sim*n, 1/lambda), n_sim),
+                        1, mean)
 
 ```
 
@@ -41,15 +41,18 @@ The following plot shows the Normally distributed points along with our Exponent
 
 ```{r ExpDist, echo=FALSE}
 # Line plot for both
-Y <- c(sort(ExpDataPts), sort(NormalDataPts))
-X <- c(rep(1:n_sim,2))
+Y <- c(sort(ExpDataPts), sort(ExpDataPts40), sort(NormalDataPts),  sort(NormalDataPts40))
+X <- c(rep(1:n_sim,4))
 
-PlotDf <- data.frame(Index = X, "Data_Points" = Y, Distribution = c(rep("Exponential Distribution", n_sim), rep("Normal Distribution", n_sim)))
+Stat <- data.frame(x = c(1/lambda), Line = c("Theoretical Mean"))
 
+PlotDf <- data.frame(Index = X, "Data_Points" = Y, Distribution = c(rep("Exponential Distribution", n_sim*2), rep("Normal Distribution", n_sim*2)), Avg = c(rep("Mean",n_sim), rep("Mean40", n_sim), rep("Mean",n_sim), rep("Mean40", n_sim)))
+
+Pdf <- subset(PlotDf, Avg == "Mean" )
 
 # Plotting
-g <- ggplot(data = PlotDf, aes(Index, Data_Points))
-g <- g + geom_point(aes(color = Distribution)) + geom_hline(yintercept = 1/lambda, size = 1.5)
+g <- ggplot(data = Pdf, aes(Index, Data_Points))
+g <- g + geom_point(aes(color = Distribution)) + geom_hline(aes(yintercept = x, linetype = Line), data=Stat, size = 1.5) + facet_grid(.~Avg)
 print(g)
 
 ```
@@ -60,13 +63,14 @@ print(g)
 
 ```{r Histogram, echo=FALSE}
 
-g <- ggplot(data = PlotDf, aes(x = Data_Points)) + geom_histogram(aes(fill = Distribution), binwidth = 1)  + geom_vline(xintercept = 1/lambda, size = 1.5)
+Stat <- data.frame(x = c(1/lambda), Line = c("Theoretical Mean"))
+g <- ggplot(data = PlotDf, aes(x = Data_Points)) + geom_histogram(aes(fill = Distribution), binwidth = 1)  + geom_vline(aes(xintercept = x, linetype = Line), data=Stat, size = 1.5)
 
 print(g) 
 
 ```
 
-Again you can see in this histogram that the `Exponential` distribution compared to `Normal` distribution is centered around the same mean (black vertical line) but not symmetric around that.
+Again you can see in this histogram that the `Exponential` distribution compared to `Normal` distribution it is not symmetric around mean (black vertical line), but centered at the mean.
 
 ### The sample mean and the theoretical mean of the distribution.
 
@@ -76,27 +80,27 @@ Again you can see in this histogram that the `Exponential` distribution compared
 **Sample Mean**
 
 - Sample Mean is an estimate of **Population Mean** `(Theoretical Mean)`.  
-- After doing some experiments & collecting data the mean of that data is our **Sample Mean** which is the estimate for our population mean.  
+- After doing some experiments & collecting data, we take the mean of that data; that is our **Sample Mean** `the estimate for our population mean.`  
 
 
-```{r SampleMean, echo=FALSE}
+```{r SampleMean, echo=FALSE, fig.cap="Distribution of 1000 simulations of 1.) Exponential Values & 2.) Mean of 40 Exponential Values"}
 
-PlotDf <- data.frame(Data_Points = ExpDataPts, Index = 1:n_sim)
+Pdf <- subset(PlotDf, Distribution == "Exponential Distribution" )
 
 Stat <- data.frame(x = c(1/lambda), Line = c("Theoretical Mean"))
 
-g <- ggplot(data=PlotDf, aes(x = Data_Points)) + 
+g <- ggplot(data=Pdf, aes(x = Data_Points)) + 
             geom_histogram(aes(y =..density..), binwidth = 1, fill="white", color = "black") + 
-            geom_density(size = 1.5, color="black", fill = "#FF6666", alpha = 0.2) + 
-            geom_vline(aes(xintercept = x, linetype = Line),data=Stat, color = "BLUE", size = 1.5, show.legend = TRUE) + 
+            geom_density(size = 1.0, color="black", fill = "#FF6666", alpha = 0.2) + 
+            geom_vline(aes(xintercept = x, linetype = Line),data=Stat, color = "BLUE", size = 1.0, show.legend = TRUE) + 
             labs(title = "Theoretical Mean amongst Sample Mean") + 
-            labs(x= "Exponential Data Point Values", y = "Density") 
+            labs(x= "Exponential Data Point Values", y = "Density") + facet_grid(.~Avg)
 
 print(g)
 
 ```
 
-Clearly the peak (sample mean) is close to the *Population mean* but not exactly the same. It will approach the population mean as we increase the sample size. 
+Clearly the peak (sample mean) is close to the *Population mean* but not exactly the same in the first plot. It approaches the population mean as we increase the sample size (Take each value as mean of 40 such values; Inturn `r n_sim*n` total samples).  
 
 ### The sample variance and the theoretical variance of the distribution.
 
@@ -106,20 +110,20 @@ Clearly the peak (sample mean) is close to the *Population mean* but not exactly
 `r 1/lambda^2`
 
 
-```{r SampleVar, echo=FALSE, fig.cap="Distribution of 1000 variances for (40 values each) "}
+```{r SampleVar, echo=FALSE, fig.cap="Distribution of variance from 1000 simulations for mean(40 values each) "}
 
 Var_ExpDataPts40 <- apply( matrix(rexp(n_sim*n), n_sim),
                         1, var)
+
 PlotDf <- data.frame(Variance = Var_ExpDataPts40, Index = 1:n_sim)
 Stat <- data.frame(x = c((1/lambda^2)/n,1/lambda^2), Line = c("Sample Varaince","Theoretical Variance"))
 
 g <- ggplot(data=PlotDf, aes(x = Variance)) + 
             geom_histogram(aes(y =..density..), binwidth = 1, fill="white", color = "black") + 
             geom_vline(aes(xintercept = x, linetype = Line),data=Stat, color = "BLUE", size = 1.5, show.legend = TRUE) + 
-            labs(title = "Theoretical variance amongst Sample variance") + 
+            labs(title = "Theoretical variance amongst sample variance") + 
             labs(x= "Variance of Exponential Data Values", y = "Density") +
             geom_density(size = 1.5, color="black", fill = "#FF6666", alpha = 0.2) 
-            
 print(g)
 
 ```
@@ -128,24 +132,17 @@ Sample variance is an estimate of population variance hence as we have learned t
 
 It is clearly not centered at population variance because in this case it was just 40 values each. But as we increase the sample size it will approach the true **Population Variance**.
 
+### Distributions of characteristic values
 
 
-### The sample variance and the theoretical variance of the distribution.
+```{r CLT, echo=FALSE, fig.cap="Distribution of mean & variance from 1000 simulations of 40 values each follows a Normal distribution centered at what it's trying to estimate (Population Mean / Population Variance)"}
 
-
-
-```{r CLT, echo=FALSE}
-Mean_ExpDataPts40 <- apply( matrix(rexp(n_sim*n), n_sim),
-                        1, mean)
-
-PlotDf <- data.frame(Mean = c(ExpDataPts, Mean_ExpDataPts40) , Index = rep(1:n_sim, 2), "Factor" = c(rep("Avg", n_sim), rep("Avg40", n_sim)) )
+PlotDf <- data.frame(Mean = c(ExpDataPts40, Var_ExpDataPts40) , Index = rep(1:n_sim, 2), "Factor" = c(rep("Mean", n_sim), rep("Variance", n_sim)) )
 PlotDf$Factor <- as.factor(PlotDf$Factor)
-
-Stat <- data.frame(x = c(1/lambda), Line = c("Theoretical Mean"))
 
 g <- ggplot(data=PlotDf, aes(x = Mean)) + 
             geom_histogram(aes(y =..density..), binwidth = 0.35, fill="white", color = "black") +  
-            labs(title = "Law of large numbers") + 
+            labs(title = "Law of large numbers/ Central Limit Thm") + 
             labs(x= "Density", y = "Value Exponential Data Values") +
             geom_density(size = 1.5, color="black", fill = "#FF6666", alpha = 0.2) +
             facet_grid(.~Factor)
@@ -156,4 +153,5 @@ print(g)
 ```
 
 
-In the above plot
+In this plot we can see that, when we take the distribution of average from 40 random exponential variables we get a `Normal distribution`.  
+
