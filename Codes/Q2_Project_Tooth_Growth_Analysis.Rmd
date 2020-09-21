@@ -1,0 +1,184 @@
+---
+title: "The Effect of Vitamin C on Tooth Growth in Guinea Pigs"
+author: "Tejus"
+date: "20/09/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+data("ToothGrowth")
+library(ggplot2)
+library(data.table)
+library(formattable)
+setDT(ToothGrowth)
+ToothGrowth$dose <- as.factor(ToothGrowth$dose)
+
+customGreen0 = "#DeF7E9"
+customGreen = "#71CA97"
+
+customRed0 = "#f5d3d3"
+customRed = "#ff7f7f"
+
+```
+
+
+### Overview : 
+
+- We would like to look at the following Tooth growth data and do some basic statistics.
+- First the data was looked at and then based on mean & variance for each category we decided the test statistic to be computed. 
+- After significance testing we have also made some inferences about the data in the last section of results & inferences.  
+
+Tooth_Growth Data :  
+
+- A data frame with 60 observations on 3 variables.
+- 60 guinea pigs (unpaired/ independent groups). Each animal received one of three dose levels of vitamin C (0.5, 1, and 2 mg/day) by 1 of the following delivery methods. 
+- Two delivery methods, orange juice (coded as 'OJ') or ascorbic acid (a form of vitamin C and coded as 'VC').
+
+### Basic exploratory data analyses
+
+```{r Explore, fig.cap="Histogram according to each of the variables; Vehicle & Dosage"}
+head(ToothGrowth)
+qplot(len, data=ToothGrowth, facets = dose~supp, fill = dose, binwidth = 1)
+```
+
+------
+
+### Basic summary of the data.
+  
+  
+**Mean of the data**  
+
+```{r Summary, echo=FALSE}
+# Looking at the mean changes for each var
+Mean_Factors <- dcast.data.table(ToothGrowth, dose~supp, fun.aggregate =  mean,value.var = "len")  
+Mean_Factors$Total = apply(Mean_Factors[,2:3], 1, sum)
+names(Mean_Factors) <- c("Dose", "OJ",    "VC",    "Total")
+
+# prettifying
+formattable(Mean_Factors, 
+            list("Total" = formatter("span", style = ~ style(color = "grey",font.weight = "bold")),        "OJ" = color_tile(customGreen0, customGreen),
+                 "VC" = color_tile(customGreen0, customGreen) ))
+```
+
+**Variance of the data**
+
+```{r warning=FALSE, echo=FALSE}
+# Looking at the variance for each variable
+
+Var_Factors <- dcast.data.table(ToothGrowth, dose~supp, var, value.var = "len")
+Var_Factors$Total <- apply(Var_Factors[,2:3], 1, sum)
+names(Var_Factors) <- c("Dose", "OJ",    "VC",    "Total")
+
+# prettifying
+formattable(Var_Factors, 
+            list("Total" = formatter("span", style = ~ style(color = "grey",font.weight = "bold")),        "OJ" = color_tile(customRed0, customRed),
+                 "VC" = color_tile(customRed0, customRed) ))
+
+```
+
+From the above plots it's clear that though the mean is high for Orange Juice `OJ` it also has large variance relative to Ascorbic acid `VC`.  Also one can see that as the dose increases we can see more growth. We can see if this increase in growth is significant in the following sections.  
+
+-------
+### Tooth growth by method of administration
+
+Let us now see if the difference between the 2 administration methods are significantly different from each other using a 2 sample T-test. Since the variance doesn't seem equal from the above table we will also do Welch T-Test (In t.test Fn set this param  `var.equal = FALSE`)
+
+**Assumptions**
+
+- Since the sample size is small we will assume the `len` variable follows a T distribution.  
+- Variance also is high between the 2 groups hence the Welch test.
+- Let our alternate hypothesis `Ho : Mean length of OJ > Mean length of VC`. 
+- Thus our null hypothesis becomes `Ha : Mean length of OJ !> Mean length of VC`.
+
+```{r Adm_Ttest, echo=FALSE}
+
+VC <- (ToothGrowth[supp == "VC",1])$len
+OJ <- (ToothGrowth[supp == "OJ",1])$len
+
+# Creating a dataframe for 2 sample T-test.
+Adm_df <- data.table(VC = c(VC), OJ = OJ,Dose = ToothGrowth$dose)
+
+t.test(Adm_df[,2], Adm_df[,1], paired = FALSE, conf.level = 0.95, var.equal = FALSE, alternative = "greater")
+
+```
+
+```{r echo=FALSE}
+PVal <- t.test(Adm_df[,2], Adm_df[,1], paired = FALSE, conf.level = 0.95, var.equal = FALSE, alternative = "greater")$p.value
+```
+- Since our p value `r PVal` is well below ` < 0.05` we can reject the `Ho hypothesis` with 95% confidence as there is only a `r PVal*100`% chance of the difference observed (between OJ & VC) being from Null distribution.  
+
+**Conclusion : **  
+
+Orange juice `'OJ'` delivery of Vitamin C has shown significant growth of odontoblasts compared to Ascorbic acid `'VC'`
+
+
+### Tooth growth by dose 
+
+Let us now see if the difference between the different dosages are significant from each other using a 2 sample T-test. Since the variance doesn't seem equal from the above table we will also do Welch T-Test (In t.test Fn set this param  `var.equal = FALSE`)
+
+**Assumptions**
+- Since the sample size is small we will assume the `len` variable follows a T distribution.  
+- Variance also is high between the 2 groups hence the Welch test with unequal variances.
+
+1.) Dose 0.5 mg/day V/S Dose 1 mg/day  
+
+- Let our alternate hypothesis `Ho : Mean length for 1mg/day dose  > Mean length for  0.5mg/day`. 
+- Thus our null hypothesis becomes `Ha : Mean length for 1mg/day !> Mean length for 0.5mg/day`.
+
+```{r D1}
+
+D1 <- (ToothGrowth[dose == "0.5",1])$len
+D2 <- (ToothGrowth[dose == "1",1])$len
+D3 <- (ToothGrowth[dose == "2",1])$len
+
+t.test(D2, D1, paired = FALSE, conf.level = 0.95, var.equal = FALSE, alternative = "greater")
+
+```
+
+```{r echo=FALSE}
+PVal <- t.test(D2, D1, paired = FALSE, conf.level = 0.95, var.equal = FALSE, alternative = "greater")$p.value
+```
+
+- Since our p value `r PVal` is well below ` < 0.05` we can reject the `Ho hypothesis` with 95% confidence as there is only a `r PVal*100`% chance of the difference observed (between Dose 1 mg/day & Dose 0.5 mg/day) being from Null distribution.  
+
+**Conclusion : **  
+Dose `'1 mg/day'` of Vitamin C has shown significant growth of odontoblasts compared to Dose `'0.5 mg/day'`
+
+2.) Dose 1 mg/day V/S Dose 2 mg/day
+
+Since their mean lengths are close in values we will see if there is any difference in their means using a 2 sided hypothesis test.  
+
+- Let our alternate hypothesis `Ho : Mean length for dose 1mg/day != Mean length of 2 mg/day`. 
+- Thus our null hypothesis becomes `Ha : Mean length for 1mg/day == Mean length of 2mg/day`.
+
+```{r D2_Ttest}
+t.test(D3, D2, paired = FALSE, conf.level = 0.95, var.equal = FALSE)
+```
+
+```{r echo=FALSE}
+PVal <- t.test(D3, D3, paired = FALSE, conf.level = 0.95, var.equal = FALSE)$p.value
+CI <- t.test(D3, D2, paired = FALSE, conf.level = 0.95, var.equal = FALSE)$conf
+```
+
+- Since our p value `r PVal` is well below ` < 0.05` we can reject the `Ho hypothesis` with 95% confidence as there is only a `r PVal*100`% chance of the difference observed (between Dose 2 mg/day & Dose 1 mg/day) being from Null distribution.  
+- And as the 95% confidence interval is above zero we can say that 95% of the times we can expect 'mean difference between Dose 2mg/day & dose 1mg/day' will lie between that interval of `r CI[[1]]` & `r CI[[2]]`.  
+
+**Conclusion : **  
+Dose `'2 mg/day'` of Vitamin C has shown significant growth of odontoblasts compared to Dose `'1 mg/day'`
+
+
+### Results & inferences
+
+Below conclusions satisfy p value cutoff of 0.05 or with 95% confidence we can say.  
+
+- Dose `'1 mg/day'` of Vitamin C has shown significant growth of odontoblasts compared to Dose `'0.5 mg/day'`
+
+- Dose `'2 mg/day'` of Vitamin C has shown significant growth of odontoblasts compared to Dose `'1 mg/day'`. Since dose 1 mg/day is greater than 0.5mg/day and 2mg/day > 1mg/day we can conclude the best dose to be **2mg/day**.
+
+- Orange juice `'OJ'` delivery of Vitamin C has shown significant growth of odontoblasts compared to Ascorbic acid `'VC'`
+
+Note : All of the above inferences have been made assuming the groups are independent with unequal variances between the groups. Since the sample size was also small we assumed the variable follows T-distribution.  
+
+***
+
